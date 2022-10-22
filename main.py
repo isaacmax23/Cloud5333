@@ -29,7 +29,7 @@ updater = Updater("5550303230:AAGAeLPLxUQDsvkCASUlhTnLlRUv_X-thFg",
 def start(update: Update, context: CallbackContext):
     update.message.reply_text(
         "Hello sir, Welcome to the Bot.Please write\
-        /help to see the commands available.")
+        /help to see the commands.")
 
 
 def help(update: Update, context: CallbackContext):
