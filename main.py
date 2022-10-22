@@ -69,7 +69,7 @@ def unknown(update: Update, context: CallbackContext):
 
 def unknown_text(update: Update, context: CallbackContext):
     update.message.reply_text(
-        "Sorry I can't recognize  , you said '%s'" % update.message.text)
+        "Sorry I can't recize  , you said '%s'" % update.message.text)
 def hello_url(update: Update, context: CallbackContext):
     update.message.reply_text("Hola!")
 
