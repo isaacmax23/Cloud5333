@@ -64,7 +64,7 @@ def geeks_url(update: Update, context: CallbackContext):
 
 def unknown(update: Update, context: CallbackContext):
     update.message.reply_text(
-        "Sorry '%s' is not a valid com" % update.message.text)
+        "Sorry '%s' is not a valid command" % update.message.text)
 
 
 def unknown_text(update: Update, context: CallbackContext):
