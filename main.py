@@ -1,21 +1,21 @@
-import datetime
-
-from flask import Flask, render_template
+from flask import Flask, render_template, jsonify, request
 
 app = Flask(__name__)
 
+dummy_times = ['sd', 'er']
 
-@app.route('/')
+@app.route('/', methods = ['POST'])
+
 def root():
     # For the sake of example, use static information to inflate the template.
     # This will be replaced with real information in later steps.
-    dummy_times = [datetime.datetime(2018, 1, 1, 10, 0, 0),
-                   datetime.datetime(2018, 1, 2, 10, 30, 0),
-                   datetime.datetime(2018, 1, 3, 11, 0, 0),
-                   ]
 
+    create_property(request.form)
     return render_template('index.html', times=dummy_times)
-
+def create_property(new_prop):
+    dummy_times[0] = new_prop['id']
+    dummy_times[1] = new_prop['message']
+    return new_prop
 
 if __name__ == '__main__':
     # This is used when running locally only. When deploying to Google App
