@@ -17,9 +17,9 @@ def open_connection():
 
     try:
         if os.environ.get('GAE_ENV') == 'standard':
-        conn = pymysql.connect(user=db_user, password=db_password,
-                               unix_socket=unix_socket, db=db_name,
-                               cursorclass=pymysql.cursors.DictCursor
+            conn = pymysql.connect(user=db_user, password=db_password,
+                                   unix_socket=unix_socket, db=db_name,
+                                   cursorclass=pymysql.cursors.DictCursor
                                )
         # conn = pymysql.connect(user=db_user, password=db_password,
         #                        host=db_connection_name, db=db_name
