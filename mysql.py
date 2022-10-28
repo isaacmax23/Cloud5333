@@ -9,7 +9,7 @@ db_connection_name = os.environ.get('INSTANCE_UNIX_SOCKET')
 # db_user = 'test'
 # db_password = 'test'
 # db_name = 'project_db'
-# db_connection_name = '192.168.0.107'
+# db_connection_name = '192.168.0.108'
 
 
 def open_connection():
@@ -69,7 +69,7 @@ def get_tempostatus(user_tid):
     with conn.cursor() as cursor:
         result = cursor.execute('SELECT status FROM tempo_users WHERE telegramId = ' + user_tid + ';')
         if result > 0:
-            status = cursor.fetchone()[0]
+            status = cursor.fetchone()['status']
         else:
             status = 0
     conn.close()
@@ -128,7 +128,7 @@ def get_tempocode(user_tid):
     with conn.cursor() as cursor:
         result = cursor.execute('SELECT code FROM tempo_users WHERE telegramId = ' + user_tid + ';')
         if result > 0:
-            code = cursor.fetchone()[0]
+            code = cursor.fetchone()['code']
         else:
             code = 0
     conn.close()
@@ -139,7 +139,7 @@ def get_tempoemail(user_tid):
     with conn.cursor() as cursor:
         result = cursor.execute('SELECT email FROM tempo_users WHERE telegramId = ' + user_tid + ';')
         if result > 0:
-            code = cursor.fetchone()[0]
+            code = cursor.fetchone()['email']
         else:
             code = 0
     conn.close()
