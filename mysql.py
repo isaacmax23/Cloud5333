@@ -6,24 +6,28 @@ db_password = os.environ.get('DB_PASS')
 db_name = os.environ.get('DB_NAME')
 db_connection_name = os.environ.get('INSTANCE_UNIX_SOCKET')
 
-# db_user = 'test'
-# db_password = 'test'
-# db_name = 'project_db'
-# db_connection_name = '192.168.0.108'
-
-
 def open_connection():
+    local = True
+
+    if local:
+        db_user = 'test'
+        db_password = 'test'
+        db_name = 'project_db'
+        db_connection_name = '192.168.0.108'
+
     unix_socket = '/cloudsql/{}'.format(db_connection_name)
 
     try:
-        if os.environ.get('GAE_ENV') == 'standard':
+        if not local:
+            if os.environ.get('GAE_ENV') == 'standard':
+                conn = pymysql.connect(user=db_user, password=db_password,
+                                       unix_socket=unix_socket, db=db_name,
+                                       cursorclass=pymysql.cursors.DictCursor
+                                   )
+        else:
             conn = pymysql.connect(user=db_user, password=db_password,
-                                   unix_socket=unix_socket, db=db_name,
-                                   cursorclass=pymysql.cursors.DictCursor
-                               )
-        # conn = pymysql.connect(user=db_user, password=db_password,
-        #                        host=db_connection_name, db=db_name
-        #                        )
+                                   host=db_connection_name, db=db_name
+                                   )
     except pymysql.MySQLError as e:
         print("Error: ", e)
 
@@ -63,17 +67,6 @@ def check_tempotid(user_tid):
             is_tempotid = False
     conn.close()
     return is_tempotid
-
-def get_tempostatus(user_tid):
-    conn = open_connection()
-    with conn.cursor() as cursor:
-        result = cursor.execute('SELECT status FROM tempo_users WHERE telegramId = ' + user_tid + ';')
-        if result > 0:
-            status = cursor.fetchone()['status']
-        else:
-            status = 0
-    conn.close()
-    return status
 
 def insert_tempouser(user_tid):
     conn = open_connection()
@@ -128,7 +121,11 @@ def get_tempocode(user_tid):
     with conn.cursor() as cursor:
         result = cursor.execute('SELECT code FROM tempo_users WHERE telegramId = ' + user_tid + ';')
         if result > 0:
-            code = cursor.fetchone()['code']
+            row = cursor.fetchone()
+            if type(row) is tuple:
+                code = row[0]
+            else:
+                code = row['status']
         else:
             code = 0
     conn.close()
@@ -139,11 +136,30 @@ def get_tempoemail(user_tid):
     with conn.cursor() as cursor:
         result = cursor.execute('SELECT email FROM tempo_users WHERE telegramId = ' + user_tid + ';')
         if result > 0:
-            code = cursor.fetchone()['email']
+            row = cursor.fetchone()
+            if type(row) is tuple:
+                email = row[0]
+            else:
+                email = row['status']
         else:
-            code = 0
+            email = 0
     conn.close()
-    return code
+    return email
+
+def get_tempostatus(user_tid):
+    conn = open_connection()
+    with conn.cursor() as cursor:
+        result = cursor.execute('SELECT status FROM tempo_users WHERE telegramId = ' + user_tid + ';')
+        if result > 0:
+            row = cursor.fetchone()
+            if type(row) is tuple:
+                status = row[0]
+            else:
+                status = row['status']
+        else:
+            status = 0
+    conn.close()
+    return status
 
 def delete_tempouser(user_tid):
     conn = open_connection()
