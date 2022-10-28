@@ -7,7 +7,7 @@ db_name = os.environ.get('DB_NAME')
 db_connection_name = os.environ.get('INSTANCE_UNIX_SOCKET')
 
 def open_connection():
-    local = True
+    local = False
 
     if local:
         db_user = 'test'
