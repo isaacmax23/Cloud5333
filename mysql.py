@@ -9,12 +9,6 @@ db_connection_name = os.environ.get('INSTANCE_UNIX_SOCKET')
 def open_connection():
     local = False
 
-    if local:
-        db_user = 'test'
-        db_password = 'test'
-        db_name = 'project_db'
-        db_connection_name = '192.168.0.108'
-
     unix_socket = '/cloudsql/{}'.format(db_connection_name)
 
     try:
@@ -25,8 +19,8 @@ def open_connection():
                                        cursorclass=pymysql.cursors.DictCursor
                                    )
         else:
-            conn = pymysql.connect(user=db_user, password=db_password,
-                                   host=db_connection_name, db=db_name
+            conn = pymysql.connect(user='test', password='test',
+                                   host='192.168.0.108', db='project_db'
                                    )
     except pymysql.MySQLError as e:
         print("Error: ", e)
@@ -125,7 +119,7 @@ def get_tempocode(user_tid):
             if type(row) is tuple:
                 code = row[0]
             else:
-                code = row['status']
+                code = row['code']
         else:
             code = 0
     conn.close()
@@ -140,7 +134,7 @@ def get_tempoemail(user_tid):
             if type(row) is tuple:
                 email = row[0]
             else:
-                email = row['status']
+                email = row['email']
         else:
             email = 0
     conn.close()
