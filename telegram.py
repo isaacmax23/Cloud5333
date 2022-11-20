@@ -7,5 +7,4 @@ def send_message(user_id, text):
     x = requests.get(url, params = {"chat_id": user_id, "text": text, "parse_mode": "MarkdownV2"})
 
     #print the response (the content of the requested file):
-    print(x.text)
     return True
