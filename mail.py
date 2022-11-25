@@ -8,4 +8,4 @@ def send_email(email, text):
 
     #print the response (the content of the requested file):
     print(x.text)
-    return True
+    return x.text
