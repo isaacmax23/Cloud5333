@@ -5,11 +5,30 @@ from mysql import check_email, check_tid, check_tempotid, insert_tempouser, get_
     get_val2, update_val2, get_st_grade
 from telegram import send_message, send_message_with_reply
 from mail import send_email
+from google.cloud import pubsub_v1
 import random
 
 app = Flask(__name__)
 
+project_id = "top-cubist-365802"
+topic_id = "otp-email-list"
+publisher = pubsub_v1.PublisherClient()
+topic_path = publisher.topic_path(project_id, topic_id)
+
+def sendMail(email, code):
+    x = {
+        "email": email,
+        "text": code
+    }
+    data_str = json.dumps(x)
+    data = data_str.encode("utf-8")
+    # When you publish a message, the client returns a future.
+    future1 = publisher.publish(topic_path, data)
+    print(future1.result())
+
 @app.route('/', methods = ['POST'])
+
+
 
 def root():
     # For the sake of example, use static information to inflate the template.
@@ -92,7 +111,7 @@ def root():
             if tempo_status == 1:
                 if check_email(user_message):
                     code = random.randint(1000,9999)
-                    #debugmail = send_email(user_message, code)
+                    send_email(user_message, code)
                     update_tempostatus(user_id, 2)
                     update_tempocode(user_id, code)
                     update_tempoemail(user_id, user_message)
