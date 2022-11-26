@@ -23,7 +23,7 @@ def open_connection():
                                        )
         else:
             conn = pymysql.connect(user='test', password='test',
-                                   host='192.168.146.149', db='project_db'
+                                   host='192.168.146.152', db='project_db'
                                    )
     except pymysql.MySQLError as e:
         print("Error: ", e)
@@ -380,3 +380,160 @@ def get_st_grade(user_tid, classword_id):
             grade = 0
     conn.close()
     return grade
+
+
+def get_pr_courses(user_tid):
+    conn = open_connection()
+    course_names = []
+    course_ids = []
+    with conn.cursor() as cursor:
+        result = cursor.execute('SELECT b.name, b.id FROM users AS a JOIN courses AS b ON a.id = b.user_id WHERE a.telegramId=' + user_tid + ';')
+        if result > 0:
+            rows = cursor.fetchall()
+            for row in rows:
+                if type(row) is tuple:
+                    course_names.append([row[0]])
+                    course_ids.append([row[1]])
+                else:
+                    course_names.append([row['name']])
+                    course_ids.append([row['id']])
+        else:
+            course_names = []
+            course_ids = []
+    conn.close()
+    return [course_names, course_ids]
+
+def get_pr_classworks(user_course):
+    conn = open_connection()
+    classwork_names = []
+    classwork_ids = []
+    with conn.cursor() as cursor:
+        result = cursor.execute('SELECT b.name, b.id FROM courses AS a JOIN classworks as b ON a.id = b.course_id WHERE a.name = "' + user_course + '";')
+        if result > 0:
+            rows = cursor.fetchall()
+            for row in rows:
+                if type(row) is tuple:
+                    classwork_names.append([row[0]])
+                    classwork_ids.append([row[1]])
+                else:
+                    classwork_names.append([row['name']])
+                    classwork_ids.append([row['id']])
+        else:
+            classwork_names = []
+            classwork_ids = []
+    conn.close()
+    return [classwork_names, classwork_ids]
+
+
+def get_pr_students(user_tid, classwork_id):
+    conn = open_connection()
+    students_names = []
+    students_gradeids = []
+    students_classworkids = []
+    with conn.cursor() as cursor:
+        result = cursor.execute(
+            'SELECT a.name, COALESCE(b.id, -1) AS id, COALESCE(b.grade, "*") AS grade '
+            'FROM (SELECT b.name, b.id FROM course_enrollments AS a JOIN users AS b '
+            'ON b.id = a.user_id WHERE a.course_id = (SELECT course_id '
+            'FROM classworks WHERE id = ' + str(classwork_id) + ')) AS a LEFT JOIN (SELECT id, user_id, grade '
+            'FROM grades WHERE classwork_id = ' + str(classwork_id) + ') AS b ON a.id = b.user_id;')
+        if result > 0:
+            rows = cursor.fetchall()
+            for row in rows:
+                if type(row) is tuple:
+                    students_names.append([row[0] + " - " + row[2]])
+                    students_gradeids.append([row[1]])
+                else:
+                    students_names.append([row['name'] + " - " + row['grade']])
+                    students_gradeids.append([row['id']])
+        else:
+            students_names = []
+            students_gradeids = []
+    students_classworkids.append([classwork_id])
+    conn.close()
+    return [students_names, students_gradeids, students_classworkids]
+
+
+def update_val3(user_tid, val3):
+    conn = open_connection()
+    with conn.cursor() as cursor:
+        result = cursor.execute("UPDATE users SET val3 = '" + str(json.dumps(val3)) + "' WHERE telegramId= " + str(user_tid) + ";")
+        if result > 0:
+            conn.commit()
+            print(cursor.lastrowid)
+        else:
+            pass
+    conn.close()
+    return result
+
+
+def get_val3(user_tid):
+    conn = open_connection()
+    with conn.cursor() as cursor:
+        result = cursor.execute('SELECT val3 FROM users WHERE telegramId = ' + user_tid + ';')
+        if result > 0:
+            row = cursor.fetchone()
+            if type(row) is tuple:
+                val3 = row[0]
+            else:
+                val3 = row['val3']
+        else:
+            val3 = "[[]]"
+    conn.close()
+    return json.loads(val3)
+
+def update_val4(user_tid, val4):
+    conn = open_connection()
+    with conn.cursor() as cursor:
+        result = cursor.execute("UPDATE users SET val4 = '" + str(json.dumps(val4)) + "' WHERE telegramId= " + str(user_tid) + ";")
+        if result > 0:
+            conn.commit()
+            print(cursor.lastrowid)
+        else:
+            pass
+    conn.close()
+    return result
+
+
+def get_val4(user_tid):
+    conn = open_connection()
+    with conn.cursor() as cursor:
+        result = cursor.execute('SELECT val4 FROM users WHERE telegramId = ' + user_tid + ';')
+        if result > 0:
+            row = cursor.fetchone()
+            if type(row) is tuple:
+                val4 = row[0]
+            else:
+                val4 = row['val4']
+        else:
+            val4 = "[[]]"
+    conn.close()
+    return json.loads(val4)
+
+
+def upgrade_grade(grade_id, new_grade):
+    conn = open_connection()
+    with conn.cursor() as cursor:
+        result = cursor.execute(
+            "UPDATE grades SET grade = '" + new_grade + "' WHERE id = " + grade_id + ";")
+        if result > 0:
+            conn.commit()
+            print(cursor.lastrowid)
+        else:
+            pass
+    conn.close()
+    return result
+
+def insert_grade(user_name, classwork_id, new_grade):
+    conn = open_connection()
+    with conn.cursor() as cursor:
+        result = cursor.execute(
+            "INSERT INTO grades (classwork_id, grade, user_id) VALUES (" + classwork_id + ", " + new_grade +
+            ", (SELECT id FROM users WHERE name = '" + user_name + "'));")
+        if result > 0:
+            conn.commit()
+            print(cursor.lastrowid)
+        else:
+            pass
+    conn.close()
+    return result
