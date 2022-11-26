@@ -7,7 +7,7 @@ from telegram import send_message, send_message_with_reply
 from mail import send_email
 from google.cloud import pubsub_v1
 import random
-
+import json
 app = Flask(__name__)
 
 project_id = "top-cubist-365802"
@@ -17,8 +17,9 @@ topic_path = publisher.topic_path(project_id, topic_id)
 
 def sendMail(email, code):
     x = {
-        "email": email,
-        "text": code
+        "receiver_email": email,
+        "subject": "Authentication Code - Virtual TA",
+        "message": str(code)
     }
     data_str = json.dumps(x)
     data = data_str.encode("utf-8")
