@@ -6,7 +6,7 @@ from mysql import check_email, check_tid, check_tempotid, insert_tempouser, get_
     get_val4, upgrade_grade, insert_grade
 
 from telegram import send_message, send_message_with_reply
-from mail import send_email
+#from mail import send_email
 from google.cloud import pubsub_v1
 import random
 import json
@@ -241,7 +241,7 @@ def root():
             if tempo_status == 1:
                 if check_email(user_message):
                     code = random.randint(1000,9999)
-                    send_email(user_message, code)
+                    sendMail(user_message, code)
                     update_tempostatus(user_id, 2)
                     update_tempocode(user_id, code)
                     update_tempoemail(user_id, user_message)
