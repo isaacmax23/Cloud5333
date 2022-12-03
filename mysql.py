@@ -23,7 +23,7 @@ def open_connection():
                                        )
         else:
             conn = pymysql.connect(user='test', password='test',
-                                   host='192.168.146.152', db='project_db'
+                                   host='192.168.146.150', db='project_db'
                                    )
     except pymysql.MySQLError as e:
         print("Error: ", e)
@@ -287,6 +287,18 @@ def update_tid(user_tid, tid):
     conn.close()
     return result
 
+def reset_tid(user_tid):
+    conn = open_connection()
+    with conn.cursor() as cursor:
+        result = cursor.execute('UPDATE users SET telegramId = 0 WHERE telegramId= ' + str(user_tid) + ';')
+        if result > 0:
+            conn.commit()
+            print(cursor.lastrowid)
+        else:
+            pass
+    conn.close()
+    return result
+
 def update_val1(user_tid, val1):
     conn = open_connection()
     with conn.cursor() as cursor:
@@ -537,3 +549,64 @@ def insert_grade(user_name, classwork_id, new_grade):
             pass
     conn.close()
     return result
+
+def get_session_time(user_tid):
+    conn = open_connection()
+    with conn.cursor() as cursor:
+        result = cursor.execute('SELECT last_interaction FROM users WHERE telegramId = ' + user_tid + ';')
+        if result > 0:
+            row = cursor.fetchone()
+            if type(row) is tuple:
+                time = row[0]
+            else:
+                time = row['last_interaction']
+            session_time = (datetime.now() - time).total_seconds()
+        else:
+            session_time = 10000
+    conn.close()
+    return session_time
+
+def update_maxauth(user_tid, maxauth):
+    conn = open_connection()
+    with conn.cursor() as cursor:
+        result = cursor.execute('UPDATE users SET max_auth = ' + str(maxauth) + ' WHERE telegramId=' + user_tid + ';')
+        if result > 0:
+            conn.commit()
+            print(cursor.lastrowid)
+        else:
+            pass
+    conn.close()
+    return result
+
+
+def get_auth_time(user_tid):
+    conn = open_connection()
+    with conn.cursor() as cursor:
+        result = cursor.execute('SELECT date_auth FROM users WHERE telegramId = ' + user_tid + ';')
+        if result > 0:
+            row = cursor.fetchone()
+            if type(row) is tuple:
+                time = row[0]
+            else:
+                time = row['date_auth']
+            auth_time = (datetime.now() - time).total_seconds()/60
+        else:
+            auth_time = 1000000
+    conn.close()
+    return auth_time
+
+
+def get_max_auth(user_tid):
+    conn = open_connection()
+    with conn.cursor() as cursor:
+        result = cursor.execute('SELECT max_auth FROM users WHERE telegramId = ' + user_tid + ';')
+        if result > 0:
+            row = cursor.fetchone()
+            if type(row) is tuple:
+                max_auth = row[0]
+            else:
+                max_auth = row['max_auth']
+        else:
+            max_auth = 0
+    conn.close()
+    return max_auth

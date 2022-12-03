@@ -3,10 +3,9 @@ from mysql import check_email, check_tid, check_tempotid, insert_tempouser, get_
     update_tempocode, get_tempocode, delete_tempouser, update_tempoemail, update_status, update_tid, get_tempoemail, \
     get_role, get_status, update_dateauth, get_st_courses, update_datelast, update_val1, get_val1, get_st_classworks, \
     get_val2, update_val2, get_st_grade, get_pr_courses, get_pr_students, update_val3, get_val3, update_val4, \
-    get_val4, upgrade_grade, insert_grade
+    get_val4, upgrade_grade, insert_grade, get_session_time, update_maxauth, get_auth_time, get_max_auth, reset_tid
 
 from telegram import send_message, send_message_with_reply
-#from mail import send_email
 from google.cloud import pubsub_v1
 import random
 import json
@@ -39,10 +38,15 @@ def root():
     user_id = request.form['id']
     user_message = request.form['message']
     code = 0
+    if check_tid(user_id) and get_auth_time(user_id) > get_max_auth(user_id):
+        print('Auth time: ' + str(get_auth_time(user_id)))
+        reset_tid(user_id)
+        update_status(user_id, 0)
     if check_tid(user_id):
+        session_time = get_session_time(user_id)
         update_datelast(user_id)
         status = get_status(user_id)
-        if status == 1:
+        if status == 1 or session_time > 30:
             if get_role(user_id):
                 send_message_with_reply(user_id, "__VTA__ \-\> Main Menu", [["Get Grade"],["Options"]])
                 update_status(user_id, 2)
@@ -56,6 +60,9 @@ def root():
                 courses[0].append(['Back to Main Menu'])
                 update_status(user_id, 3)
                 send_message_with_reply(user_id, "__VTA__ \-\> Select course:", courses[0])
+            elif user_message == 'Options':
+                update_status(user_id, 13)
+                send_message_with_reply(user_id, "__VTA__ \-\> Select option", [["Authorization Max Time"],["Back to Main Menu"]])
             else:
                 send_message(user_id, "Please select one option from menu")
         elif status == 3:
@@ -117,6 +124,10 @@ def root():
                 courses[0].append(['Back to Main Menu'])
                 update_status(user_id, 8)
                 send_message_with_reply(user_id, "__VTA__ \-\> Select course:", courses[0])
+            elif user_message == 'Options':
+                update_status(user_id, 13)
+                send_message_with_reply(user_id, "__VTA__ \-\> Select option",
+                                        [["Authorization Max Time"], ["Back to Main Menu"]])
             else:
                 send_message(user_id, "Please select one option from menu")
         elif status == 8:
@@ -232,6 +243,57 @@ def root():
                 students[0].append(['Back to Main Menu'])
                 send_message_with_reply(user_id, "__VTA__ \-\> Select student:", students[0])
                 update_status(user_id, 10)
+            else:
+                send_message(user_id, "Please provide a correct grade")
+        elif status == 13:
+            if user_message == 'Back to Main Menu':
+                if get_role(user_id):
+                    send_message_with_reply(user_id, "__VTA__ \-\> Main Menu", [["Get Grade"], ["Options"]])
+                    update_status(user_id, 2)
+                else:
+                    send_message_with_reply(user_id, "__VTA__ \-\> Main Menu", [["Update Grade"], ["Options"]])
+                    update_status(user_id, 7)
+            elif user_message == 'Authorization Max Time':
+                options = []
+                options.append(['5 min'])
+                options.append(['1 hour'])
+                options.append(['1 day'])
+                options.append(['1 week'])
+                options.append(['1 month'])
+                options.append(['Back to Options'])
+                options.append(['Back to Main Menu'])
+                send_message_with_reply(user_id, "__VTA__ \-\> Select Max Auth Time", options)
+                update_status(user_id, 14)
+            else:
+                send_message(user_id, "Please provide a correct grade")
+        elif status == 14:
+            if user_message == 'Back to Main Menu':
+                if get_role(user_id):
+                    send_message_with_reply(user_id, "__VTA__ \-\> Main Menu", [["Get Grade"], ["Options"]])
+                    update_status(user_id, 2)
+                else:
+                    send_message_with_reply(user_id, "__VTA__ \-\> Main Menu", [["Update Grade"], ["Options"]])
+                    update_status(user_id, 7)
+            if user_message == 'Back to Options':
+                update_status(user_id, 13)
+                send_message_with_reply(user_id, "__VTA__ \-\> Select option",
+                                        [["Authorization Max Time"], ["Back to Main Menu"]])
+            elif user_message in ['5 min', '1 hour', '1 day', '1 week', '1 month']:
+                new_time = 5
+                if user_message == '5 min':
+                    new_time = 5
+                if user_message == '1 hour':
+                    new_time = 60
+                if user_message == '1 day':
+                    new_time = 1440
+                if user_message == '1 week':
+                    new_time = 10080
+                if user_message == '1 month':
+                    new_time = 302400
+                update_maxauth(user_id, new_time)
+                update_status(user_id, 13)
+                send_message_with_reply(user_id, "__VTA__ \-\> Select option",
+                                        [["Authorization Max Time"], ["Back to Main Menu"]])
             else:
                 send_message(user_id, "Please provide a correct grade")
 
