@@ -28,6 +28,13 @@ def sendMail(email, code):
     future1 = publisher.publish(topic_path, data)
     print(future1.result())
 
+def main_menu(user_id):
+    if get_role(user_id):
+        send_message_with_reply(user_id, "__VTA__ \-\> Main Menu", [["Get Grade"], ["Options"]])
+        update_status(user_id, 2)
+    else:
+        send_message_with_reply(user_id, "__VTA__ \-\> Main Menu", [["Update Grade"], ["Options"]])
+        update_status(user_id, 7)
 @app.route('/', methods = ['POST'])
 
 
@@ -47,12 +54,7 @@ def root():
         update_datelast(user_id)
         status = get_status(user_id)
         if status == 1 or session_time > 30:
-            if get_role(user_id):
-                send_message_with_reply(user_id, "__VTA__ \-\> Main Menu", [["Get Grade"],["Options"]])
-                update_status(user_id, 2)
-            else:
-                send_message_with_reply(user_id, "__VTA__ \-\> Main Menu", [["Update Grade"],["Options"]])
-                update_status(user_id, 7)
+            main_menu(user_id)
         elif status == 2:
             if user_message == 'Get Grade':
                 courses = get_st_courses(user_id)
@@ -247,12 +249,7 @@ def root():
                 send_message(user_id, "Please provide a correct grade")
         elif status == 13:
             if user_message == 'Back to Main Menu':
-                if get_role(user_id):
-                    send_message_with_reply(user_id, "__VTA__ \-\> Main Menu", [["Get Grade"], ["Options"]])
-                    update_status(user_id, 2)
-                else:
-                    send_message_with_reply(user_id, "__VTA__ \-\> Main Menu", [["Update Grade"], ["Options"]])
-                    update_status(user_id, 7)
+                main_menu(user_id)
             elif user_message == 'Authorization Max Time':
                 options = []
                 options.append(['5 min'])
@@ -318,10 +315,11 @@ def root():
                     update_dateauth(user_id)
                     delete_tempouser(user_id)
                     if get_role(user_id):
-                        send_message(user_id, '__LOGIN__ \-\> You are logged in as Student')
+                        send_message(user_id, ' You are logged in as Student')
                     else:
-                        send_message(user_id, '__LOGIN__ \-\> You are logged in as Professor')
-                    send_message(user_id, '__LOGIN__ \-\> Write "hello" to begin')
+                        send_message(user_id, ' You are logged in as Professor')
+                    main_menu(user_id)
+                    # send_message(user_id, '__LOGIN__ \-\> Write "hello" to begin')
                 else:
                     send_message(user_id, '__LOGIN__ \-\> Code not correct')
                     delete_tempouser(user_id)
