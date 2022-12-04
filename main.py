@@ -16,6 +16,31 @@ topic_id = "otp-email-list"
 publisher = pubsub_v1.PublisherClient()
 topic_path = publisher.topic_path(project_id, topic_id)
 
+def set_interval(user_id,user_message):
+    new_time = 5
+    if user_message == '5 min':
+        new_time = 5
+    if user_message == '1 hour':
+        new_time = 60
+    if user_message == '1 day':
+        new_time = 1440
+    if user_message == '1 week':
+        new_time = 10080
+    if user_message == '1 month':
+        new_time = 302400
+    update_maxauth(user_id, new_time)
+
+def verify_interval(user_id):
+    options = []
+    options.append(['5 min'])
+    options.append(['1 hour'])
+    options.append(['1 day'])
+    options.append(['1 week'])
+    options.append(['1 month'])
+    options.append(['Back to Options'])
+    options.append(['Back to Main Menu'])
+    send_message_with_reply(user_id, "__VTA__ \-\> Select Max Auth Time", options)
+
 def sendMail(email, code):
     x = {
         "receiver_email": email,
@@ -251,15 +276,7 @@ def root():
             if user_message == 'Back to Main Menu':
                 main_menu(user_id)
             elif user_message == 'Authorization Max Time':
-                options = []
-                options.append(['5 min'])
-                options.append(['1 hour'])
-                options.append(['1 day'])
-                options.append(['1 week'])
-                options.append(['1 month'])
-                options.append(['Back to Options'])
-                options.append(['Back to Main Menu'])
-                send_message_with_reply(user_id, "__VTA__ \-\> Select Max Auth Time", options)
+                verify_interval(user_id)
                 update_status(user_id, 14)
             else:
                 send_message(user_id, "Please provide a correct grade")
@@ -276,23 +293,16 @@ def root():
                 send_message_with_reply(user_id, "__VTA__ \-\> Select option",
                                         [["Authorization Max Time"], ["Back to Main Menu"]])
             elif user_message in ['5 min', '1 hour', '1 day', '1 week', '1 month']:
-                new_time = 5
-                if user_message == '5 min':
-                    new_time = 5
-                if user_message == '1 hour':
-                    new_time = 60
-                if user_message == '1 day':
-                    new_time = 1440
-                if user_message == '1 week':
-                    new_time = 10080
-                if user_message == '1 month':
-                    new_time = 302400
-                update_maxauth(user_id, new_time)
+                set_interval(user_id,user_message)
                 update_status(user_id, 13)
                 send_message_with_reply(user_id, "__VTA__ \-\> Select option",
                                         [["Authorization Max Time"], ["Back to Main Menu"]])
             else:
                 send_message(user_id, "Please provide a correct grade")
+        elif status == 15:
+            if user_message in ['5 min', '1 hour', '1 day', '1 week', '1 month']:
+                set_interval(user_id,user_message)
+            main_menu(user_id)
 
     else:
         if check_tempotid(user_id):
@@ -311,15 +321,14 @@ def root():
             if tempo_status == 2:
                 if str(get_tempocode(user_id)) == user_message:
                     update_tid(user_id, get_tempoemail(user_id))
-                    update_status(user_id, 1)
+                    update_status(user_id, 15)
                     update_dateauth(user_id)
                     delete_tempouser(user_id)
                     if get_role(user_id):
                         send_message(user_id, ' You are logged in as Student')
                     else:
                         send_message(user_id, ' You are logged in as Professor')
-                    main_menu(user_id)
-                    # send_message(user_id, '__LOGIN__ \-\> Write "hello" to begin')
+                    verify_interval(user_id)
                 else:
                     send_message(user_id, '__LOGIN__ \-\> Code not correct')
                     delete_tempouser(user_id)
