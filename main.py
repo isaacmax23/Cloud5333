@@ -30,7 +30,7 @@ def set_interval(user_id,user_message):
         new_time = 302400
     update_maxauth(user_id, new_time)
 
-def verify_interval(user_id):
+def get_interval(user_id):
     options = []
     options.append(['5 min'])
     options.append(['1 hour'])
@@ -70,6 +70,7 @@ def root():
     user_id = request.form['id']
     user_message = request.form['message']
     code = 0
+
     if check_tid(user_id) and get_auth_time(user_id) > get_max_auth(user_id):
         print('Auth time: ' + str(get_auth_time(user_id)))
         reset_tid(user_id)
@@ -78,7 +79,11 @@ def root():
         session_time = get_session_time(user_id)
         update_datelast(user_id)
         status = get_status(user_id)
-        if status == 1 or session_time > 30:
+        if status == 15:
+            if user_message in ['5 min', '1 hour', '1 day', '1 week', '1 month']:
+                set_interval(user_id, user_message)
+                main_menu(user_id)
+        elif status == 1 or session_time > 30:
             main_menu(user_id)
         elif status == 2:
             if user_message == 'Get Grade':
@@ -276,7 +281,7 @@ def root():
             if user_message == 'Back to Main Menu':
                 main_menu(user_id)
             elif user_message == 'Authorization Max Time':
-                verify_interval(user_id)
+                get_interval(user_id)
                 update_status(user_id, 14)
             else:
                 send_message(user_id, "Please provide a correct grade")
@@ -299,10 +304,7 @@ def root():
                                         [["Authorization Max Time"], ["Back to Main Menu"]])
             else:
                 send_message(user_id, "Please provide a correct grade")
-        elif status == 15:
-            if user_message in ['5 min', '1 hour', '1 day', '1 week', '1 month']:
-                set_interval(user_id,user_message)
-            main_menu(user_id)
+
 
     else:
         if check_tempotid(user_id):
@@ -328,7 +330,8 @@ def root():
                         send_message(user_id, ' You are logged in as Student')
                     else:
                         send_message(user_id, ' You are logged in as Professor')
-                    verify_interval(user_id)
+                    get_interval(user_id)
+
                 else:
                     send_message(user_id, '__LOGIN__ \-\> Code not correct')
                     delete_tempouser(user_id)
