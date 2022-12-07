@@ -200,6 +200,22 @@ def get_status(user_tid):
     return status
 
 
+def get_tid_by_name(user_name):
+    conn = open_connection()
+    with conn.cursor() as cursor:
+        result = cursor.execute('SELECT telegramId FROM users WHERE name = "' + user_name + '";')
+        if result > 0:
+            row = cursor.fetchone()
+            if type(row) is tuple:
+                tid = row[0]
+            else:
+                tid = row['telegramId']
+        else:
+            tid = 0
+    conn.close()
+    return tid
+
+
 def get_st_courses(user_tid):
     conn = open_connection()
     course_names = []
@@ -588,6 +604,21 @@ def insert_grade(user_name, classwork_id, new_grade):
     conn.close()
     return result
 
+
+def insert_classwork(course_id, new_classwork):
+    conn = open_connection()
+    with conn.cursor() as cursor:
+        result = cursor.execute(
+            "INSERT INTO classworks (name, course_id) VALUES ('" + new_classwork + "', " + course_id + ");")
+        if result > 0:
+            conn.commit()
+            print(cursor.lastrowid)
+        else:
+            pass
+    conn.close()
+    return result
+
+
 def get_session_time(user_tid):
     conn = open_connection()
     with conn.cursor() as cursor:
@@ -646,5 +677,21 @@ def get_max_auth(user_tid):
                 max_auth = row['max_auth']
         else:
             max_auth = 0
+    conn.close()
+    return max_auth
+
+
+def get_grade_data(student, cw_id):
+    conn = open_connection()
+    with conn.cursor() as cursor:
+        result = cursor.execute('SELECT professor, course, classwork FROM v_grades WHERE student = "' + student + '" AND cw_id = ' + cw_id + ';')
+        if result > 0:
+            row = cursor.fetchone()
+            if type(row) is tuple:
+                max_auth = [row[0], row[1], row[2]]
+            else:
+                max_auth = [row['professor'], row['course'], row['classwork']]
+        else:
+            max_auth = [[],[],[]]
     conn.close()
     return max_auth

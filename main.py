@@ -4,7 +4,7 @@ from mysql import check_email, check_tid, check_tempotid, insert_tempouser, get_
     get_role, get_status, update_dateauth, get_st_courses, update_datelast, update_val1, get_val1, get_st_classworks, \
     get_val2, update_val2, get_st_grade, get_pr_courses, get_pr_students, update_val3, get_val3, update_val4, \
     get_val4, upgrade_grade, insert_grade, get_session_time, update_maxauth, get_auth_time, get_max_auth, reset_tid, \
-    get_st_grades
+    get_st_grades, insert_classwork, get_tid_by_name, get_grade_data
 
 from telegram import send_message, send_message_with_reply
 from google.cloud import pubsub_v1
@@ -72,6 +72,14 @@ def root():
     user_message = request.form['message']
     code = 0
 
+    # f = open("tmp\demofile3.txt", "w")
+    # f.write("Woops! I have deleted the content!")
+    # f.close()
+    #
+    # # open and read the file after the appending:
+    # f = open("tmp\demofile3.txt", "r")
+    # print(f.read())
+
     if check_tid(user_id) and get_auth_time(user_id) > get_max_auth(user_id):
         print('Auth time: ' + str(get_auth_time(user_id)))
         reset_tid(user_id)
@@ -128,12 +136,16 @@ def root():
                 send_message(user_id, "Please select one option from menu")
         elif status == 8:
                 courses = get_val1(user_id)[0]
+                print(courses)
                 if user_message == 'Back to Main Menu':
                     send_message_with_reply(user_id, "__VTA__ \-\> Main Menu", [["Update Grade"], ["Options"]])
                     update_status(user_id, 7)
                 elif [user_message] in courses:
                     classworks = get_st_classworks(user_message)
                     update_val2(user_id, classworks)
+                    course_id = get_val1(user_id)[1][courses.index([user_message])]
+                    update_val3(user_id, [course_id, user_message])
+                    classworks[0].append(['Create Classwork'])
                     classworks[0].append(['Back to Courses'])
                     classworks[0].append(['Back to Main Menu'])
                     update_status(user_id, 9)
@@ -152,6 +164,13 @@ def root():
                 courses.append(['Back to Main Menu'])
                 send_message_with_reply(user_id, "__VTA__ \-\> Select course:", courses)
                 update_status(user_id, 8)
+            elif user_message == 'Create Classwork':
+                new_classwork = []
+                new_classwork.append(['Back to Classworks'])
+                new_classwork.append(['Back to Courses'])
+                new_classwork.append(['Back to Main Menu'])
+                send_message_with_reply(user_id, "__VTA__ \-\> Type the new classwork: ", new_classwork)
+                update_status(user_id, 16)
             elif [user_message] in classwork_names:
                 classwork_id = classwork_ids[classwork_names.index([user_message])]
                 students = get_pr_students(user_id, classwork_id[0])
@@ -187,10 +206,10 @@ def root():
                 student = user_message.split(' - ')[0]
                 grade = user_message.split(' - ')[1]
                 if grade == '*':
-                    val4 = [students_classworkid, student]
+                    val4 = [students_classworkid, student, -1]
                     update_status(user_id, 11)
                 else:
-                    val4 = [students_classworkid, grade_id]
+                    val4 = [students_classworkid, student, grade_id]
                     update_status(user_id, 12)
                 update_val4(user_id, val4)
                 st_grade_menu = []
@@ -204,7 +223,8 @@ def root():
         elif status == 11 or status == 12:
             new_grade_info = get_val4(user_id)
             grade_classwork_id = new_grade_info[0]
-            new_grade_data = new_grade_info[1]
+            grade_student = new_grade_info[1]
+            grade_id = new_grade_info[2]
             if user_message == 'Back to Main Menu':
                 send_message_with_reply(user_id, "__VTA__ \-\> Main Menu", [["Update Grade"], ["Options"]])
                 update_status(user_id, 7)
@@ -229,9 +249,13 @@ def root():
             elif user_message.strip().isdigit() and int(user_message.strip()) < 101:
                 new_grade = user_message.strip()
                 if status == 11:
-                    insert_grade(new_grade_data, str(grade_classwork_id[0]), new_grade)
+                    insert_grade(grade_student, str(grade_classwork_id[0]), new_grade)
                 if status == 12:
-                    upgrade_grade(str(new_grade_data[0]), new_grade)
+                    upgrade_grade(str(grade_id[0]), new_grade)
+                tid = get_tid_by_name(grade_student)
+                grade_data = get_grade_data(grade_student, str(grade_classwork_id[0]))
+                if tid != 0:
+                    send_message(tid, grade_data[0] + ' posted new grade for ' + grade_data[1]  + ' ' + grade_data[2] + ': ' + new_grade)
                 students = get_pr_students(user_id, grade_classwork_id[0])
                 update_val3(user_id, students)
                 students[0].append(['Back to Classworks'])
@@ -248,7 +272,7 @@ def root():
                 get_interval(user_id)
                 update_status(user_id, 14)
             else:
-                send_message(user_id, "Please provide a correct grade")
+                send_message(user_id, "Please select one option from menu")
         elif status == 14:
             if user_message == 'Back to Main Menu':
                 if get_role(user_id):
@@ -267,8 +291,36 @@ def root():
                 send_message_with_reply(user_id, "__VTA__ \-\> Select option",
                                         [["Authorization Max Time"], ["Back to Main Menu"]])
             else:
-                send_message(user_id, "Please provide a correct grade")
-
+                send_message(user_id, "Please select one option from menu")
+        elif status == 16:
+            if user_message == 'Back to Main Menu':
+                send_message_with_reply(user_id, "__VTA__ \-\> Main Menu", [["Update Grade"], ["Options"]])
+                update_status(user_id, 7)
+            elif user_message == 'Back to Courses':
+                courses = get_val1(user_id)[0]
+                courses.append(['Back to Main Menu'])
+                send_message_with_reply(user_id, "__VTA__ \-\> Select course:", courses)
+                update_status(user_id, 8)
+            elif user_message == 'Back to Classworks':
+                classworks = get_val2(user_id)[0]
+                classworks.append(['Back to Courses'])
+                classworks.append(['Back to Main Menu'])
+                send_message_with_reply(user_id, "__VTA__ \-\> Select classwork:", classworks)
+                update_status(user_id, 9)
+            elif len(user_message.strip()) < 15:
+                new_classwork = user_message.strip()
+                course = get_val3(user_id)
+                course_id = course[0][0]
+                insert_classwork(str(course_id), new_classwork)
+                classworks = get_st_classworks(course[1])
+                print(classworks)
+                update_val2(user_id, classworks)
+                classworks[0].append(['Back to Courses'])
+                classworks[0].append(['Back to Main Menu'])
+                send_message_with_reply(user_id, "__VTA__ \-\> Select classwork:", classworks[0])
+                update_status(user_id, 9)
+            else:
+                send_message(user_id, "Please provide a correct classwork")
 
     else:
         if check_tempotid(user_id):
