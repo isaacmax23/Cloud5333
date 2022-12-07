@@ -394,6 +394,44 @@ def get_st_grade(user_tid, classword_id):
     return grade
 
 
+def get_st_grade(user_tid, classword_id):
+    conn = open_connection()
+    with conn.cursor() as cursor:
+        print(classword_id)
+        result = cursor.execute('SELECT a.grade FROM grades AS a JOIN users AS b ON b.id = a.user_id WHERE b.telegramId = ' + user_tid + ' AND a.classwork_id = ' + str(classword_id) + ';')
+        if result > 0:
+            row = cursor.fetchone()
+            if type(row) is tuple:
+                grade = row[0]
+            else:
+                grade = row['grade']
+        else:
+            grade = 0
+    conn.close()
+    return grade
+
+def get_st_grades(user_tid, course_name):
+    conn = open_connection()
+    classwork_names = []
+    grades = []
+    with conn.cursor() as cursor:
+        result = cursor.execute('SELECT classwork, grade FROM `v_grades` WHERE telegramId = ' + user_tid + ' and course = "' + course_name + '";')
+        if result > 0:
+            rows = cursor.fetchall()
+            for row in rows:
+                if type(row) is tuple:
+                    classwork_names.append([row[0]])
+                    grades.append([row[1]])
+                else:
+                    classwork_names.append([row['classwork']])
+                    grades.append([row['grade']])
+        else:
+            classwork_names = []
+            grades = []
+    conn.close()
+    return [classwork_names, grades]
+
+
 def get_pr_courses(user_tid):
     conn = open_connection()
     course_names = []

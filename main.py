@@ -3,7 +3,8 @@ from mysql import check_email, check_tid, check_tempotid, insert_tempouser, get_
     update_tempocode, get_tempocode, delete_tempouser, update_tempoemail, update_status, update_tid, get_tempoemail, \
     get_role, get_status, update_dateauth, get_st_courses, update_datelast, update_val1, get_val1, get_st_classworks, \
     get_val2, update_val2, get_st_grade, get_pr_courses, get_pr_students, update_val3, get_val3, update_val4, \
-    get_val4, upgrade_grade, insert_grade, get_session_time, update_maxauth, get_auth_time, get_max_auth, reset_tid
+    get_val4, upgrade_grade, insert_grade, get_session_time, update_maxauth, get_auth_time, get_max_auth, reset_tid, \
+    get_st_grades
 
 from telegram import send_message, send_message_with_reply
 from google.cloud import pubsub_v1
@@ -83,7 +84,7 @@ def root():
             if user_message in ['5 min', '1 hour', '1 day', '1 week', '1 month']:
                 set_interval(user_id, user_message)
                 main_menu(user_id)
-        elif status == 1 or session_time > 30:
+        elif status == 1 or session_time > 120:
             main_menu(user_id)
         elif status == 2:
             if user_message == 'Get Grade':
@@ -103,52 +104,15 @@ def root():
                 send_message_with_reply(user_id, "__VTA__ \-\> Main Menu", [["Get Grade"], ["Options"]])
                 update_status(user_id, 2)
             elif [user_message] in courses:
-                classworks = get_st_classworks(user_message)
-                update_val2(user_id, classworks)
-                classworks[0].append(['Back to Courses'])
-                classworks[0].append(['Back to Main Menu'])
-                update_status(user_id, 4)
-                send_message_with_reply(user_id, "__VTA__ \-\> Select classwork:", classworks[0])
+                grades = get_st_grades(user_id, user_message)
+                grade_message = ""
+                for i in range(len(grades[0])):
+                    grade_message = grade_message + '\n' + grades[0][i][0] + ': ' + (' ' if grades[1][i][0] == -1 else str(grades[1][i][0]))
+                print(grade_message)
+                courses.append(['Back to Main Menu'])
+                send_message_with_reply(user_id, grade_message + "\n__VTA__ \-\> Select classwork:", courses)
             else:
                 send_message(user_id, "Please select one option from menu")
-        elif status == 4:
-            classworks = get_val2(user_id)
-            classwork_ids = classworks[1]
-            classwork_names = classworks[0]
-            if user_message == 'Back to Main Menu':
-                send_message_with_reply(user_id, "__VTA__ \-\> Main Menu", [["Get Grade"], ["Options"]])
-                update_status(user_id, 2)
-            elif user_message == 'Back to Courses':
-                courses = get_val1(user_id)[0]
-                courses.append(['Back to Main Menu'])
-                send_message_with_reply(user_id, "__VTA__ \-\> Select course:", courses)
-                update_status(user_id, 3)
-            elif [user_message] in classwork_names:
-                classwork_id = classwork_ids[classwork_names.index([user_message])]
-                grade = get_st_grade(user_id, classwork_id[0])
-                grade_menu = []
-                grade_menu.append(['Back to Classworks'])
-                grade_menu.append(['Back to Courses'])
-                grade_menu.append(['Back to Main Menu'])
-                update_status(user_id, 5)
-                send_message_with_reply(user_id, "__VTA__ \-\> Grade: " + str(grade), grade_menu)
-            else:
-                send_message(user_id, "Please select one option from menu")
-        elif status == 5:
-            if user_message == 'Back to Main Menu':
-                send_message_with_reply(user_id, "__VTA__ \-\> Main Menu", [["Get Grade"], ["Options"]])
-                update_status(user_id, 2)
-            elif user_message == 'Back to Courses':
-                courses = get_val1(user_id)[0]
-                courses.append(['Back to Main Menu'])
-                send_message_with_reply(user_id, "__VTA__ \-\> Select course:", courses)
-                update_status(user_id, 3)
-            elif user_message == 'Back to Classworks':
-                classworks = get_val2(user_id)[0]
-                classworks.append(['Back to Courses'])
-                classworks.append(['Back to Main Menu'])
-                send_message_with_reply(user_id, "__VTA__ \-\> Select classwork:", classworks)
-                update_status(user_id, 4)
         elif status == 7:
             if user_message == 'Update Grade':
                 courses = get_pr_courses(user_id)
@@ -315,6 +279,7 @@ def root():
                     sendMail(user_message, code)
                     update_tempostatus(user_id, 2)
                     update_tempocode(user_id, code)
+                    print(code)
                     update_tempoemail(user_id, user_message)
                     send_message(user_id, '__LOGIN__ \-\> Provide the code sent to email')
                 else:
